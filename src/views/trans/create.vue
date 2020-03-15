@@ -19,7 +19,7 @@
               v-for="(item,index) in modelData"
               :key="index"
               class="model-li"
-              v-bind:class="{modelFontColor:config.type==item.value}"
+              v-bind:class="{modelFontColor:form.model==item.value}"
               @click="chooseModel(item.value)"
             >{{item.name}}</li>
           </ul>
@@ -27,7 +27,7 @@
       </div>
       <div class="trans-template-right">
         <!--源--->
-        <el-form ref="config" :model="config" label-width="80px" v-show="sourceShow">
+        <el-form ref="form" :model="form" label-width="80px" v-show="sourceShow">
           <el-form-item label="名称">
             <el-input v-model="config.name" style="width: 28%;" />
           </el-form-item>
@@ -102,7 +102,7 @@
                 <tr class="table-field-column">
                   <th>目标字段</th>
                 </tr>
-                <tr v-for="(item2) in updateLookUp" :key="item2.value">
+                <tr v-for="(item2,index) in updateLookUp" :key="index">
                   <td>
                     <el-select v-model="item2.value" size="mini" placeholder="请选择">
                       <el-option
@@ -125,7 +125,7 @@
                 <tr class="table-field-column">
                   <th>更新</th>
                 </tr>
-                <tr v-for="(item2) in updateOptions" :key="item2.value">
+                <tr v-for="(item2,index) in updateOptions" :key="index">
                   <td>
                     <el-select v-model="item2.value" size="mini" placeholder="请选择">
                       <el-option
@@ -155,7 +155,7 @@
                 </tr>
               </table>
             </div>
-            <el-button type="success" @click="getTableField">获取字段</el-button>
+            <el-button type="success" @click="getTableField('1')">获取字段</el-button>
           </el-form-item>
         </el-form>
 
@@ -174,7 +174,7 @@
                   <th>流字段</th>
                   <!-- <th>目标字段</th> -->
                 </tr>
-                <tr v-for="item2 in keyStream" :key="item2.value">
+                <tr v-for="(item2,index) in keyStream" :key="index">
                   <td>
                     <el-select v-model="item2.value" size="mini" placeholder="请选择">
                       <el-option
@@ -220,7 +220,7 @@
                 <tr class="table-field-column">
                   <th>目标字段</th>
                 </tr>
-                <tr v-for="item2 in keyLookup" :key="item2.value">
+                <tr v-for="(item2,index) in keyLookup" :key="index">
                   <td>
                     <el-select v-model="item2.value" size="mini" placeholder="请选择">
                       <el-option
@@ -261,7 +261,7 @@
             下一步
             <i class="el-icon-arrow-right el-icon--right"></i>
           </el-button>
-          <el-button type="primary" v-if="active == 3" @click="onSubmit">创建</el-button>
+          <el-button type="primary" v-if="active == 3" @click="onSubmit">{{form.id != ''?'更新':'创建'}}</el-button>
         </div>
       </div>
     </div>
@@ -341,6 +341,7 @@ export default {
       ],
       updateLookUp: [],
       updateStream: [],
+      keyStream: [],
       update: [],
       keyLookup: [],
       keyCondition: [],
@@ -351,25 +352,7 @@ export default {
         { label: ">=", value: ">=" },
         { label: "=<", value: "=<" }
       ],
-      config: {
-        type: "",
-        name: "",
-        tableinput: {
-          dataSource: "",
-          tableName: "",
-          SQL: ""
-        },
-        insertupdate: {
-          dataSource: "",
-          tableName: "",
-          keyLookup: [],
-          keyStream: [],
-          keyCondition: [],
-          updateLookup: [],
-          updateStream: [],
-          update: []
-        }
-      },
+
       tablesVisible: false,
       targetTablesVisible: false,
       treeTableData: [],
@@ -382,14 +365,30 @@ export default {
       targetOptions: [],
       fieldConditionOptions: [],
       form: {
+        id: "",
         name: "",
-        region: "",
-        date1: "",
-        date2: "",
-        delivery: false,
-        type: [],
-        resource: "",
-        desc: ""
+        model: "",
+        config: "",
+        way: 0,
+        status: 0
+      },
+      config: {
+        name: "",
+        tableinput: {
+          dataSource: null,
+          tableName: "",
+          SQL: ""
+        },
+        insertupdate: {
+          dataSource: null,
+          tableName: "",
+          keyLookup: [],
+          keyStream: [],
+          keyCondition: [],
+          updateLookup: [],
+          updateStream: [],
+          update: []
+        }
       },
       modelData: [],
       tableFieldData: [{ name: "test" }],
@@ -410,6 +409,7 @@ export default {
     getDictFieldValue("taskModel").then(response => {
       this.modelData = response.data;
     });
+    this.initData();
   },
   methods: {
     /**
@@ -422,6 +422,70 @@ export default {
       postRequest(PREFIX_BASE + "/datasource/list", param).then(response => {
         this.datasourceOptions = response.data;
       });
+    },
+    initData() {
+      if (this != undefined && this.$route.query.id != undefined) {
+        getRequest(
+          PREFIX_BASE + "/trans/selectOne?id=" + this.$route.query.id
+        ).then(res => {
+          if (res.code == 0) {
+            let data = res.data;
+            this.form.id = data.id;
+            this.form.name = data.name;
+            this.form.model = data.model;
+            let configObj = JSON.parse(data.config);
+            this.config = configObj;
+
+            //获取表字段
+            this.getTableField("2");
+            this.resetArray();
+            //流字段
+            configObj.insertupdate.updateStream.forEach(val => {
+              let obj = new Object();
+              obj.value = val;
+              this.updateStream.push(obj);
+            });
+            //目标字段
+            configObj.insertupdate.updateLookup.forEach(val => {
+              let obj = new Object();
+              obj.value = val;
+              this.updateLookUp.push(obj);
+            });
+            //更新
+            configObj.insertupdate.update.forEach(val => {
+              let obj = new Object();
+              obj.value = val;
+              this.updateOptions.push(obj);
+            });
+            //操作
+            this.fieldConditionOptions = new Array(
+              this.updateStream.length
+            ).fill({});
+
+            //约束条件
+            configObj.insertupdate.keyStream.forEach(val => {
+              let obj = new Object();
+              obj.value = val;
+              this.keyStream.push(obj);
+            });
+            configObj.insertupdate.keyLookup.forEach(val => {
+              let obj = new Object();
+              obj.value = val;
+              this.keyLookup.push(obj);
+            });
+            configObj.insertupdate.keyCondition.forEach(val => {
+              let obj = new Object();
+              obj.value = val;
+              this.keyCondition.push(obj);
+            });
+            this.keyOperationCondition = new Array(this.keyLookup.length).fill(
+              {}
+            );
+
+            this.active = 1;
+          }
+        });
+      }
     },
     /**
      * 源所有表
@@ -468,8 +532,9 @@ export default {
     },
     /**
      * 获取字段
+     * type 1-点击获取字段 2-编辑时加载表字段
      */
-    getTableField() {
+    getTableField(type) {
       let source = this.datasourceOptions.find(item => {
         return item.name == this.config.tableinput.dataSource;
       });
@@ -490,32 +555,34 @@ export default {
         response => {
           this.streamOptions = response.data.streamOptions;
           this.targetOptions = response.data.targetOptions;
-          //源表字段
-          this.updateLookUp = [];
-          //目标表字段
-          this.updateStream = [];
-          this.updateOptions = [];
-          for (let item of this.streamOptions) {
-            var obj = new Object();
-            obj.value = item.value;
-            this.updateStream.push(obj);
+          if (type == "1") {
+            //源表字段
+            this.updateLookUp = [];
+            //目标表字段
+            this.updateStream = [];
+            this.updateOptions = [];
+            for (let item of this.streamOptions) {
+              var obj = new Object();
+              obj.value = item.value;
+              this.updateStream.push(obj);
+            }
+            for (let item of this.targetOptions) {
+              var obj = new Object();
+              obj.value = item.value;
+              this.updateLookUp.push(obj);
+            }
+            let len =
+              this.streamOptions.length > this.targetOptions.length
+                ? this.streamOptions.length
+                : this.targetOptions.length;
+            this.update = new Array(len).fill({});
+            for (let i = 0; i < len; i++) {
+              var obj = new Object();
+              obj.value = true;
+              this.updateOptions.push(obj);
+            }
+            this.compareFieldLength(1);
           }
-          for (let item of this.targetOptions) {
-            var obj = new Object();
-            obj.value = item.value;
-            this.updateLookUp.push(obj);
-          }
-          let len =
-            this.streamOptions.length > this.targetOptions.length
-              ? this.streamOptions.length
-              : this.targetOptions.length;
-          this.update = new Array(len).fill({});
-          for (let i = 0; i < len; i++) {
-            var obj = new Object();
-            obj.value = true;
-            this.updateOptions.push(obj);
-          }
-          this.compareFieldLength(1);
         }
       );
     },
@@ -544,14 +611,17 @@ export default {
       }
       // this.config.insertupdate.update = new Array(size).fill({});
     },
-    /**
-     * 重新刷新约束条件
-     */
-    reloadConditionColumn() {
+    resetArray() {
       this.keyLookup = [];
       this.keyStream = [];
       this.keyCondition = [];
       this.keyOperationCondition = [];
+    },
+    /**
+     * 重新刷新约束条件
+     */
+    reloadConditionColumn() {
+      this.resetArray();
       for (let item of this.streamOptions) {
         var obj = new Object();
         obj.value = item.value;
@@ -610,7 +680,7 @@ export default {
      * 选择模板
      */
     chooseModel(value) {
-      this.config.type = value;
+      this.form.model = value;
       this.active = 1;
     },
     /**
@@ -663,7 +733,7 @@ export default {
         this.keyLookup.splice(index, 1);
         this.keyStream.splice(index, 1);
         this.keyCondition.splice(index, 1);
-        this.keyOperationCondition.splice(index,1);
+        this.keyOperationCondition.splice(index, 1);
       }
     },
     resetConfigData() {
@@ -672,6 +742,8 @@ export default {
       this.config.insertupdate.updateStream = [];
       this.config.insertupdate.update = [];
       this.config.insertupdate.keyCondition = [];
+      this.config.insertupdate.keyLookup = [];
+      this.config.insertupdate.keyStream = [];
       for (let item of this.updateLookUp) {
         if (item.value != undefined) {
           this.config.insertupdate.updateLookup.push(item.value);
@@ -705,9 +777,20 @@ export default {
     },
     onSubmit() {
       this.resetConfigData();
-      postRequest(PREFIX_BASE + "/trans/save/trans", this.config).then(
+      //把config对象转成json
+      let configJson = JSON.stringify(this.config);
+      this.form.config = configJson;
+      postRequest(PREFIX_BASE + "/trans/save/trans", this.form).then(
         response => {
           if (response.code == 0) {
+            //关闭当前tag
+            this.$store.state.tagsView.visitedViews.splice(
+              this.$store.state.tagsView.visitedViews.findIndex(
+                item => item.path === this.$route.path
+              ),
+              1
+            );
+            //跳转到列表
             this.$router.push({ path: "/trans/list" });
           } else {
             this.$message.error("提交失败");

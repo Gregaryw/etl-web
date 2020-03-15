@@ -6,12 +6,13 @@ Vue.use(Router)
 /* Layout */
 import Layout from '@/views/layout/Layout'
 import datasource from '@/views/datasource/list'
+import dynamicTable from '@/views/datasource/table/index'
 import redirect from '@/views/redirect/index'
 import login from '@/views/login/index'
 import authredirect from '@/views/login/authredirect'
 import index from '@/views/dashboard/index'
 import transList from '@/views/trans/list'
-import transUpload from '@/views/trans/upload'
+// import transUpload from '@/views/trans/upload'
 import transCreate from '@/views/trans/create'
 import task from '@/views/task/index'
 import dict from '@/views/sys/dict/index'
@@ -95,6 +96,15 @@ export const asyncRouterMap = [
           title: '数据源列表',
           icon:'list'
         }
+      },
+      {
+        path: '/dynamic/table',
+        component: dynamicTable,
+        name: 'dynamicTable',
+        meta: {
+          title: '动态创建表',
+          icon:'table'
+        }
       }
     ]
   },
@@ -174,17 +184,17 @@ export const asyncRouterMap = [
           title: '添加转换',
           roles: ['admin']
         }
-      },
-      {
-        path: '/trans/upload',
-        component: transUpload,
-        name: '上传转换',
-        meta: {
-          icon: 'upload',
-          title: '上传转换',
-          roles: ['admin']
-        }
       }
+      // {
+      //   path: '/trans/upload',
+      //   component: transUpload,
+      //   name: '上传转换',
+      //   meta: {
+      //     icon: 'upload',
+      //     title: '上传转换',
+      //     roles: ['admin']
+      //   }
+      // }
     ]
   },
   {

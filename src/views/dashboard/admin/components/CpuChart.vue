@@ -19,37 +19,78 @@ export default {
     },
     height: {
       type: String,
-      default: "300px"
+      default: "350px"
+    },
+    autoResize: {
+      type: Boolean,
+      default: true
+    },
+    chartData: {
+      type: Array,
+      required: true
     }
   },
   data() {
     return {
-      chart: null
+      chart: null,
+      sidebarElm: null
     };
+  },
+  watch: {
+    chartData: {
+      deep: true,
+      handler(val) {
+        this.setOptions(val);
+      }
+    }
   },
   mounted() {
     this.initChart();
-    this.__resizeHandler = debounce(() => {
-      if (this.chart) {
-        this.chart.resize();
-      }
-    }, 100);
-    window.addEventListener("resize", this.__resizeHandler);
+    if (this.autoResize) {
+      this.__resizeHandler = debounce(() => {
+        if (this.chart) {
+          this.chart.resize();
+        }
+      }, 100);
+      window.addEventListener("resize", this.__resizeHandler);
+    }
+
+    // 监听侧边栏的变化
+    this.sidebarElm = document.getElementsByClassName("sidebar-container")[0];
+    this.sidebarElm &&
+      this.sidebarElm.addEventListener(
+        "transitionend",
+        this.sidebarResizeHandler
+      );
   },
   beforeDestroy() {
     if (!this.chart) {
       return;
     }
-    window.removeEventListener("resize", this.__resizeHandler);
+    if (this.autoResize) {
+      window.removeEventListener("resize", this.__resizeHandler);
+    }
+
+    this.sidebarElm &&
+      this.sidebarElm.removeEventListener(
+        "transitionend",
+        this.sidebarResizeHandler
+      );
+
     this.chart.dispose();
     this.chart = null;
   },
   methods: {
-    initChart() {
-      this.chart = echarts.init(this.$el, "macarons");
+    sidebarResizeHandler(e) {
+      if (e.propertyName === "width") {
+        this.__resizeHandler();
+      }
+    },
+    setOptions(data) {
       this.chart.setOption({
         title: {
-          text: "Master节点CPU使用情况",
+          text: "Master节点CPU使用率",
+          subtext: "单位(%)",
           left: "center"
         },
         tooltip: {
@@ -59,20 +100,15 @@ export default {
         legend: {
           orient: "vertical",
           left: "left",
-          data: ["使用率", "空闲率"]
+          data: ["用户利用率", "系统利用率","CPU利用率","剩余"]
         },
         series: [
           {
-            name: "访问来源",
+            name: "CPU使用率",
             type: "pie",
             radius: "55%",
             center: ["50%", "60%"],
-            data: [
-              { value: 335, name: "使用率" },
-              { value: 310, name: "空闲率" }
-            ],
-            animationEasing: "cubicInOut",
-            animationDuration: 2600,
+            data:data,
             emphasis: {
               itemStyle: {
                 shadowBlur: 10,
@@ -83,6 +119,10 @@ export default {
           }
         ]
       });
+    },
+    initChart() {
+      this.chart = echarts.init(this.$el, "macarons");
+      this.setOptions(this.chartData);
     }
   }
 };

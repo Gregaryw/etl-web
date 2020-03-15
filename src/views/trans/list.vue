@@ -25,17 +25,14 @@
           <el-table-column prop="createTime" label="创建时间" align="center"></el-table-column>
           <el-table-column fixed="right" label="操作" align="center" width="200px">
             <template slot-scope="scope">
-              <el-button v-show="scope.row.status == 0"
-                @click.native.prevent="showTransDirectory(scope.row.id)"
+              <el-button
+                v-show="scope.row.status == 0"
+                @click="showTransDirectory(scope.row.id)"
                 type="text"
                 size="small"
               >创建</el-button>
-              <el-button
-                @click.native.prevent="showTransDirectory(scope.row.id)"
-                type="text"
-                size="small"
-              >编辑</el-button>
-              <el-button @click.native.prevent="deleteRow(scope.row.id)" type="text" size="small">移除</el-button>
+              <el-button @click="edit(scope.row.id)" type="text" size="small">编辑</el-button>
+              <el-button @click="deleteRow(scope.row.id)" type="text" size="small">移除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -79,7 +76,12 @@
 </template>
 <script>
 import Pagination from "@/components/Pagination";
-import { postRequest, deleteById, getRequest,postKeyValueRequest } from "../../api/api";
+import {
+  postRequest,
+  deleteById,
+  getRequest,
+  postKeyValueRequest
+} from "../../api/api";
 const PREFIX_BASE = "/etl/master";
 export default {
   name: "tranList",
@@ -153,6 +155,12 @@ export default {
       }
     },
     /**
+     * 编辑
+     */
+    edit(id) {
+      this.$router.push({ path: "/trans/create", query: { id: id } });
+    },
+    /**
      * 获取列表数据
      */
     getList() {
@@ -160,12 +168,14 @@ export default {
       let param = {
         current: this.listQuery.page,
         size: this.listQuery.limit,
-        directory:this.trans.directory
+        directory: this.trans.directory
       };
       postRequest(PREFIX_BASE + "/trans/data", param).then(response => {
-        let result = response.data;
-        this.tableData = result.records;
-        this.total = result.total;
+        if (response.code == 0) {
+          let result = response.data;
+          this.tableData = result.data.records;
+          this.total = result.data.total;
+        }
         this.trans.directory = "";
         this.listLoading = false;
       });
@@ -180,13 +190,15 @@ export default {
     },
     buildTrans() {
       postRequest(PREFIX_BASE + "/trans/create", this.trans).then(response => {
-        if (response.code == 0) {
+        if (response != undefined && response.code == 0) {
           this.trans.id = "";
           this.trans.directory = "";
           this.dialogVisible = false;
           this.getList();
-        }else{
-          this.$message.error('失败');
+          //跳转到任务列表
+          this.$router.push({path:'/task/list'});
+        } else {
+          this.$message.error("失败");
         }
       });
     },

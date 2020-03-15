@@ -9,7 +9,7 @@
         </div>
         <div class="card-panel-description">
           <div class="card-panel-text">任务数量</div>
-          <count-to :start-val="0" :end-val="102400" :duration="2600" class="card-panel-num" />
+          <count-to :start-val="0" :end-val="taskNum" :duration="2600" class="card-panel-num" />
         </div>
       </div>
     </el-col>
@@ -22,7 +22,7 @@
         </div>
         <div class="card-panel-description">
           <div class="card-panel-text">节点数量</div>
-          <count-to :start-val="0" :end-val="81212" :duration="3000" class="card-panel-num" />
+          <count-to :start-val="0" :end-val="nodeNum" :duration="3000" class="card-panel-num" />
         </div>
       </div>
     </el-col>
@@ -35,7 +35,7 @@
         </div>
         <div class="card-panel-description">
           <div class="card-panel-text">转换数量</div>
-          <count-to :start-val="0" :end-val="9280" :duration="3200" class="card-panel-num" />
+          <count-to :start-val="0" :end-val="transNum" :duration="3200" class="card-panel-num" />
         </div>
       </div>
     </el-col>
@@ -48,7 +48,7 @@
         </div>
         <div class="card-panel-description">
           <div class="card-panel-text">资源数量</div>
-          <count-to :start-val="0" :end-val="13600" :duration="3600" class="card-panel-num" />
+          <count-to :start-val="0" :end-val="resources" :duration="3600" class="card-panel-num" />
         </div>
       </div>
     </el-col>
@@ -61,6 +61,27 @@ import CountTo from "vue-count-to";
 export default {
   components: {
     CountTo
+  },
+  props: {
+    taskNum: {
+      type: Number,
+      default: 0
+    },
+    nodeNum: {
+      type: Number,
+      default: 0
+    },
+    transNum: {
+      type: Number,
+      default: 0
+    },
+    resources: {
+      type: Number,
+      default: 0
+    }
+  },
+  data() {
+    return {};
   },
   methods: {
     handleSetLineChartData(type) {

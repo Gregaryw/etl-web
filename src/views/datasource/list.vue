@@ -14,7 +14,7 @@
         </el-form-item>
       </el-form>
     </el-col>
-    <el-table :data="tableData" border style="width: 100%">
+    <el-table :data="tableData" border highlight-current-row style="width: 100%">
       <el-table-column prop="name" label="名称" align="center"></el-table-column>
       <el-table-column prop="datasourceTypeName" label="类型" align="center"></el-table-column>
       <el-table-column prop="dbName" label="数据库名称" align="center"></el-table-column>
