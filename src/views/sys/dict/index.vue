@@ -55,7 +55,13 @@
     </div>
     <div class="dict-right">
       <div class="toolbar">
-        <el-button type="danger" size="medium" icon="el-icon-delete" round>批量删除</el-button>
+        <el-button
+          type="danger"
+          size="medium"
+          icon="el-icon-delete"
+          @click="batchRemove()"
+          round
+        >批量删除</el-button>
       </div>
       <div class="dict-field-list">
         <el-table
@@ -261,10 +267,25 @@ export default {
       this.getDictFieldList(row.id);
     },
     /**
+     * 批量删除属性
+     */
+    batchRemove() {
+      let params = [];
+      this.$refs.multipleTable.selection.forEach(field => {
+        params.push(field.id);
+      });
+      if(params.length > 0){
+        postRequest(PREFIX_BASE + "/field/batch/remove").then(res => {
+          if(res.code == 0){
+            this.getDictFieldList();
+          }
+        })
+      }
+    },
+    /**
      * 开关属性变更
      */
     switchChange(id) {
-      alert(id);
     },
     /**
      * 提交表单

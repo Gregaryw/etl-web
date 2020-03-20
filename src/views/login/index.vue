@@ -82,7 +82,7 @@ export default {
     //   }
     // }
     return {
-      title: "东方电科数据采集转换系统",
+      title: "东方电科数据采集系统",
       imageCode: "",
       deviceId: "",
       labelPosition: "right",
